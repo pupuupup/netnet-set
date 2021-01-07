@@ -6,7 +6,7 @@ greenlet==0.4.12
 grequests==0.3.0
 idna==2.5
 lazyme==0.0.15
-lxml==3.8.0
+lxml==4.6.2
 post==0.0.0
 public==0.0.0
 query-string==0.0.0
