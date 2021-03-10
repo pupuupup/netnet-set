@@ -1,4 +1,4 @@
 *.pyc
 final.csv
-venv/*
+venv
 .DS_Store
