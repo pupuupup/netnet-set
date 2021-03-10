@@ -1,22 +1,24 @@
+# -*- coding: utf-8 -*-
+
 import csv
 import config
 import grequests
 import re
 from lxml import html
-from lazyme.string import color_print
 from tqdm import tqdm
+import codecs
 
 
 def importData():
     with open(config.data, 'rb') as f:
-        reader = csv.reader(f)
+        reader = csv.reader(codecs.iterdecode(f, encoding="ISO-8859-1"))
         return list(reader)
 
 def getSymbol(data):
-    print "Getting Symbol ..."
-    symbolsWithHeader = map(lambda x: x[0], data)
+    print("Getting Symbol ...")
+    symbolsWithHeader = list(map(lambda x: x[0], data))
     symbols = symbolsWithHeader[ 2: len(symbolsWithHeader) ]
-    return map(lambda x: {'symbol': x}, symbols)
+    return list(map(lambda x: {'symbol': x}, symbols))
 
 def toNakedShareNumber(word):
     return float(re.sub("\D", "", word))
@@ -45,11 +47,11 @@ def scrapeAndFormatShare(page):
     return toNakedShareNumber(share)
 
 def getShare(datas):
-    print "Getting Share ..."
-    urls = map(getProfileUrl, datas)
+    print("Getting Share ...")
+    urls = list(map(getProfileUrl, datas))
     rs = (grequests.get(u) for u in urls)
     pages = tqdm(grequests.map(rs))
-    shares = map(scrapeAndFormatShare, pages)
+    shares = list(map(scrapeAndFormatShare, pages))
     for i in range(len(datas)):
         datas[i].update({'share': shares[i]})
     return datas
@@ -65,11 +67,11 @@ def scrapeAndFormatPrice(page):
     return toNakedPriceNumber(price)
 
 def getPrice(datas):
-    print "Getting Price ..."
-    urls = map(getPriceUrl, datas)
+    print("Getting Price ...")
+    urls = list(map(getPriceUrl, datas))
     rs = (grequests.get(u) for u in urls)
     pages = tqdm(grequests.map(rs))
-    prices = map(scrapeAndFormatPrice, pages)
+    prices = list(map(scrapeAndFormatPrice, pages))
     for i in range(len(datas)):
         datas[i].update({'price': prices[i]})
     return datas
@@ -91,11 +93,11 @@ def scrapeAndFormatFinance(page):
     return finance
 
 def getFinance(datas):
-    print "Getting Finance ..."
+    print("Getting Finance ...")
     urls = map(getFinanceUrl, datas)
     rs = (grequests.get(u) for u in urls)
     pages = tqdm(grequests.map(rs))
-    finances = map(scrapeAndFormatFinance, pages)
+    finances = list(map(scrapeAndFormatFinance, pages))
     for i in range(len(datas)):
         datas[i].update(finances[i])
     return datas
@@ -107,8 +109,8 @@ def calculateNCAV(data):
         return 'N/A'
 
 def getNCAV(datas):
-    print "Getting NCAV ..."
-    ncav = map(calculateNCAV, datas)
+    print("Getting NCAV ...")
+    ncav = list(map(calculateNCAV, datas))
     for i in range(len(datas)):
         datas[i].update({'ncav': ncav[i]})
     return datas
@@ -123,8 +125,8 @@ def calculateNNWC(data):
         return 'N/A'
 
 def getNNWC(datas):
-    print "Getting NNWC ..."
-    nnwc = map(calculateNNWC, datas)
+    print("Getting NNWC ...")
+    nnwc = list(map(calculateNNWC, datas))
     for i in range(len(datas)):
         datas[i].update({'nnwc': nnwc[i]})
     return datas
@@ -138,15 +140,19 @@ def calculatePercent(data):
         ncav = str(round((data['price']/data['ncav'])*100, 2))
     except:
         ncav = -1
+    if data['nnwc'] == 'N/A':
+        data['nnwc'] = -1
+    if data['ncav'] == 'N/A':
+        data['ncav'] = -1
     return {
         'symbol': data['symbol'],
-        'nnwc_percent': 'N/A' if data['nnwc'] < 0 else nnwc,
-        'ncav_percent': 'N/A' if data['ncav'] < 0 else ncav
+        'nnwc_percent': 'N/A' if int(data['nnwc']) < 0 else nnwc,
+        'ncav_percent': 'N/A' if int(data['ncav']) < 0 else ncav
     }
 
 def displayEach(data):
-    print "================="
-    print data['symbol']
+    print("=================")
+    print(data['symbol'])
     if(data['nnwc_percent'] == 'N/A'):
         pass
     elif(data['nnwc_percent'] >= 0 and data['nnwc_percent'] < 70):
@@ -165,7 +171,7 @@ def displayEach(data):
         color_print("ncav " + data['ncav_percent'] + "%", color='red')
 
 def getPercent(datas):
-    percents = map(calculatePercent, datas)
+    percents = list(map(calculatePercent, datas))
     for i in range(len(datas)):
         datas[i].update(percents [i])
     return datas
@@ -182,11 +188,12 @@ def main():
     datas = getNCAV(datas)
     datas = getNNWC(datas)
     datas = getPercent(datas)
+    print(datas)
     toCSV(datas)
 
 def toCSV(datas):
     keys = datas[0].keys()
-    with open('final.csv', 'wb') as output_file:
+    with open('final.csv', 'w') as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
         dict_writer.writerows(datas)
