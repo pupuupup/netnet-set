@@ -7,6 +7,7 @@ import re
 from lxml import html
 from tqdm import tqdm
 import codecs
+import time
 
 
 def importData():
@@ -50,7 +51,7 @@ def getShare(datas):
     print("Getting Share ...")
     urls = list(map(getProfileUrl, datas))
     rs = (grequests.get(u) for u in urls)
-    pages = tqdm(grequests.map(rs))
+    pages = tqdm(grequests.imap(rs))
     shares = list(map(scrapeAndFormatShare, pages))
     for i in range(len(datas)):
         datas[i].update({'share': shares[i]})
@@ -70,7 +71,7 @@ def getPrice(datas):
     print("Getting Price ...")
     urls = list(map(getPriceUrl, datas))
     rs = (grequests.get(u) for u in urls)
-    pages = tqdm(grequests.map(rs))
+    pages = tqdm(grequests.imap(rs))
     prices = list(map(scrapeAndFormatPrice, pages))
     for i in range(len(datas)):
         datas[i].update({'price': prices[i]})
@@ -96,7 +97,7 @@ def getFinance(datas):
     print("Getting Finance ...")
     urls = map(getFinanceUrl, datas)
     rs = (grequests.get(u) for u in urls)
-    pages = tqdm(grequests.map(rs))
+    pages = tqdm(grequests.imap(rs))
     finances = list(map(scrapeAndFormatFinance, pages))
     for i in range(len(datas)):
         datas[i].update(finances[i])
