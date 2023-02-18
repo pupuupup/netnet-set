@@ -105,7 +105,7 @@ def getFinance(datas):
 
 def calculateNCAV(data):
     try:
-        return (data['asset'] - data['liability'])/data['share']
+        return ((data['asset'] - data['liability'])/data['share'])/data['price']
     except:
         return 'N/A'
 
@@ -118,10 +118,10 @@ def getNCAV(datas):
 
 def calculateNNWC(data):
     try:
-        return ((data['cash'] + data['investment']) +\
+        return (((data['cash'] + data['investment']) +\
                (0.75 * data['recievable']) +\
                (0.5 * data['inventory']) -\
-               (data['liability']))/data['share']
+               (data['liability']))/data['share'])/data['price']
     except:
         return 'N/A'
 
